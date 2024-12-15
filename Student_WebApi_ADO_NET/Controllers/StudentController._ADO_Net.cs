@@ -20,7 +20,7 @@ namespace Student_WebApi_ADO_Net.Controllers
         {
             this._logger = logger;
         }
-     
+
         [HttpGet("GetStudents_ADO_Net")]
         public async Task<IActionResult> GetStudents_ADO_Net(string UserName = "No Name",
             bool IncludeRelations = true)
@@ -72,18 +72,26 @@ namespace Student_WebApi_ADO_Net.Controllers
         {
             try
             {
-                // Implementer kode her
+                Student Student_Object = new Student();
+
+                var student = Student_Object.GetData<Student>().FirstOrDefault(s => s.StudentID == StudentID);
 
                 this._logger.LogInfo(
-                    $"Student with StudentID : {StudentID} have been read from GetStudent_ADO_Net action by {UserName}. Relations Included : {IncludeRelations}");
-                return Ok(null);
+                    $"Student with StudentID: {StudentID} has been retrieved from GetStudent_ADO_Net action by {UserName}. Relations Included: {IncludeRelations}");
+
+                if (student == null)
+                {
+                    this._logger.LogError($"No student found with StudentID: {StudentID}");
+                    return NotFound($"No student found with StudentID: {StudentID}");
+                }
+
+                return Ok(student);
             }
-            catch (Exception Error)
+            catch (Exception ex)
             {
                 this._logger.LogError(
-                    $"Something went wrong inside GetStudent_ADO_Net action for {UserName} : {Error.Message}");
-                return StatusCode((int)HttpStatusCode.InternalServerError,
-                    $"Internal server error : {Error.ToString()}");
+                    $"Something went wrong inside GetStudent_ADO_Net action for {UserName}: {ex.Message}");
+                return StatusCode((int)HttpStatusCode.InternalServerError, $"Internal server error: {ex.ToString()}");
             }
         }
 
@@ -146,7 +154,6 @@ namespace Student_WebApi_ADO_Net.Controllers
             }
         }
 
-        // PUT: api/Student/5
         [HttpPut("UpdateStudent_ADO_Net/{StudentID}")]
         public async Task<IActionResult> UpdateStudent_ADO_Net(int StudentID,
             [FromBody] StudentForUpdateDto StudentForUpdateDto_Object,
@@ -156,14 +163,12 @@ namespace Student_WebApi_ADO_Net.Controllers
             {
                 if (StudentID != StudentForUpdateDto_Object.StudentID)
                 {
-                    //_logger.LogError($"StudentID != StudentForUpdateDto_Object.StudentID for {UserName} in action UpdateStudent");
                     return BadRequest(
                         $"StudentID != StudentForUpdateDto_Object.StudentID for {UserName} in action UpdateStudent");
                 }
 
                 if (!ModelState.IsValid)
                 {
-                    //_logger.LogError($"ModelState is Invalid for {UserName} in action UpdateStudent");
                     return BadRequest(ModelState);
                 }
 
@@ -184,7 +189,6 @@ namespace Student_WebApi_ADO_Net.Controllers
             }
             catch (Exception Error)
             {
-                //_logger.LogError($"Something went wrong inside UpdateStudent action for {UserName}: {Error.Message}");
                 return StatusCode((int)HttpStatusCode.InternalServerError,
                     $"Internal server error : {Error.ToString()}");
             }
@@ -197,20 +201,16 @@ namespace Student_WebApi_ADO_Net.Controllers
         {
             try
             {
-                // Implementer kode her
-
                 Student Student_Object = new Student();
-                int deleteResult = Student_Object.Delete(StudentID);
+                var student = Student_Object.GetData<Student>().FirstOrDefault(s => s.StudentID == StudentID);
 
-                if (deleteResult >= 0)
+                if (student == null)
                 {
-                    return Ok($"Student : {Student_Object.StudentName} blev slettet !!!");
+                    _logger.LogError($"Student with ID {StudentID} not found.");
+                    return NotFound($"Student with ID {StudentID} not found.");
                 }
-                else
-                {
-                    return BadRequest($"Noget gik galt, da {Student_Object.StudentName} : skulle oprettes !!!");
-                }
-
+                
+                int DeleteResult = Student_Object.Delete(StudentID);
 
                 this._logger.LogInfo(
                     $"Student with ID {StudentID} has been deleted in action DeleteStudent_ADO_Net by {UserName}");
